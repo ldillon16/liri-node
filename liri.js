@@ -8,14 +8,6 @@ var request = require('request');
   var spotify = new Spotify(keys.spotify);
   var client = new Twitter(keys.twitter);
 
-  fs.readFile("random.txt", "utf8", function(err, data) {
-	if (err) {
-		return console.error(err);
-	}
-	})
-
-// console.log(process.argv);
-
 switch (process.argv[2]) {
 	case "my-tweets": 
 	getTweets();
@@ -26,46 +18,63 @@ switch (process.argv[2]) {
 	case "movie-this":
 	getMovies();
 	break;
-	default: 
+	case "do-what-it-says":
 	getRandom();
-}
+	break;
+	default: 
+	console.log("please enter one of these commands and a search term: " +
+		"\n1. my-tweets" + 
+		"\n2. spotify-this-song" + 
+		"\n3. movie-this" + 
+		"\n4. do-what-it-says" + "\r\n")
+};
 
 function getTweets() {
 	console.log("tweets");
 
-var params = {screen_name: 'morpheus_skull'};
-client.get('statuses/user_timeline', params, function(error, tweets, response) {
+var params = {screen_name: "morpheus_skull"};
+client.get("statuses/user_timeline", params, function(error, tweets, response) {
   if (!error) {
   	for (var i = 0; i < tweets.length; i++) {
-        console.log(tweets[i].created_at);
-        console.log("");
-        console.log(tweets[i].text);
+  		var tweetBlocks = ("\r\n" + tweets[i].created_at + "\r\n" + tweets[i].text + "\r\n")
+
+  		console.log(tweetBlocks);
     }
   }
+  		fs.appendFile("log.txt", tweetBlocks ,function(err) {
+				if (err) {
+					return console.error(err);
+				}
+				console.log("content logged" + "\r\n")
+			})
 });
-
-
-}
+};
 
 function getSongs() {
 	console.log("songs");
 	var songName = process.argv[3];
 	if (!songName) {
-		songName = "hey";
+	 	songName = "I want it that way";
 	}
 	spotify.search({type: "track", query: songName}, function(err, data) {
 		if (!err) {
 			var songItems = data.tracks.items;
 			for (var i = 0; i < 5; i++) {
 				if (songItems[i] != undefined) {
-					var songResults =
+					var songResponse =
 					"Artist: " + songItems[i].artists[0].name + "\r\n" +
 					"Song: " + songItems[i].name + "\r\n" +
 					"Album: " + songItems[i].album.name + "\r\n" +
 					"Preview: " + songItems[i].preview_url + "\r\n";
-					console.log(songResults);
+					console.log(songResponse);
 				}
 			}
+		fs.appendFile("log.txt", songResponse ,function(err) {
+				if (err) {
+					return console.error(err);
+				}
+				console.log("content logged" + "\r\n")
+			})
 		}
 	})
 }
@@ -84,60 +93,64 @@ function getMovies() {
 			var movieData = JSON.parse(body);
 
 			var movieResponse =
-			"Title: " + movieData.Title + "\r\n" +
-			"Year: " + movieData.Year + "\r\n" +
-			"IMDB Rating: " + movieData.imdbRating + "\r\n" +
-			"Rotten Tomatoes Rating: " + movieData.tomatoes + "\r\n" +
-			"Country: " + movieData.Country + "\r\n" +
-			"Language: " + movieData.Language + "\r\n" +
-			"Plot: " + movieData.Plot + "\r\n" +
-			"Actors: " + movieData.Actors + "\r\n";
+			"\nTitle: " + movieData.Title + 
+			"\nYear: " + movieData.Year + 
+			"\nIMDB Rating: " + movieData.imdbRating + 
+			"\nRotten Tomatoes Rating: " + movieData.tomatoes + 
+			"\nCountry: " + movieData.Country + 
+			"\nLanguage: " + movieData.Language + 
+			"\nPlot: " + movieData.Plot + 
+			"\nActors: " + movieData.Actors + "\r\n";
 
 			console.log(movieResponse);
+			fs.appendFile("log.txt", movieResponse ,function(err) {
+				if (err) {
+					return console.error(err);
+				}
+				console.log("content logged" + "\r\n")
+			})
 
 		} else {
 			console.log("error: " + error);
 			return;
   		}
+        });
+    };
 
-   });
-};
+function getRandom() {
+	console.log("random");
+	fs.readFile("./random.txt", "utf8", function(error, data){
+		if (!error) {
+			// console.log("read u wrote u")
+			getRandomResults = data.split(",");
+			// console.log("read u wrote u 2" + getRandomResults[0]);
 
-// function getRandom() {
-// 	console.log("random");
-// 	fs.readFile("random.txt", "utf8", function(error, data){
-// 		if (!error) {
-// 			getRandomResults = data.split(", ");
-// 			getSong(getRandomResults[0], getRandomResults[1]);
-// 		} else {
-// 			console.log("Error: " + error);
-// 		}
-// 	})
-	
-// }
+	spotify.search({type: "track", query: getRandomResults[1]}, function(err, data) {
+		if (!err) {
+			var songItems = data.tracks.items;
+			for (var i = 0; i < 5; i++) {
+				if (songItems[i] != undefined) {
+					var songResponse =
+					"Artist: " + songItems[i].artists[0].name + "\r\n" +
+					"Song: " + songItems[i].name + "\r\n" +
+					"Album: " + songItems[i].album.name + "\r\n" +
+					"Preview: " + songItems[i].preview_url + "\r\n";
+					console.log(songResponse);
+				}
+			}
+		fs.appendFile("log.txt", songResponse ,function(err) {
+				if (err) {
+					return console.error(err);
+				}
+				console.log("content logged" + "\r\n")
+			})
+		}
+	})
 
-// function text(logResults) {
-// 	fs.appendFile("data-log.txt", logResults, error)
-// 		if (error) {
-// 			throw error;
-// 		}
-// 	};
-// };
-
-// var getMyTweets = function() {
-//   var client = new Twitter(keys);
-
-//   var params = {
-//     screen_name: "cnn"
-//   };
-//   client.get("statuses/user_timeline", params, function(error, tweets, response) {
-//     if (!error) {
-//       for (var i = 0; i < tweets.length; i++) {
-//         console.log(tweets[i].created_at);
-//         console.log("");
-//         console.log(tweets[i].text);
-//       }
-//     }
-//   });
-// };
+			getSongs(songName = getRandomResults[1]);
+		} else {
+			console.log("Error: " + error);
+		}
+	})	
+}
 
